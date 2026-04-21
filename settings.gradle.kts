@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 rootProject.name = "peek"
 
 include(":peek")
-include(":peek-noop")
