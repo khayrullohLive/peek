@@ -23,4 +23,3 @@ rootProject.name = "peek"
 
 include(":peek")
 include(":peek-noop")
-include(":sample")
