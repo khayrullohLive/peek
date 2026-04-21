@@ -2,9 +2,7 @@
 
 **Peek** is a lightweight in-app network inspector for Android, inspired by Flutter's [Alice](https://pub.dev/packages/alice).
 
-Capture every OkHttp request automatically, browse logs in a floating overlay, inspect full request/response details, and export everything as a shareable JSON file — all without leaving your app.
-
-> **Debug builds only.** Peek is completely removed from release builds via the no-op variant — zero overhead in production.
+Capture every OkHttp request automatically, browse logs in a floating overlay, inspect full request/response details, and export everything as a shareable JSON file — works in **all build types** (debug, release, staging).
 
 ---
 
@@ -19,7 +17,7 @@ Capture every OkHttp request automatically, browse logs in a floating overlay, i
 | 🔍 Detail view | Full headers, body, response, duration, error |
 | 📤 Share as file | Export all logs as JSON via Android share sheet |
 | 💾 Persistent | Stored in Room DB — survives app restarts |
-| 🔐 No-op release | 0 KB overhead in production builds |
+| 🌍 All build types | Works in debug, release, staging — everywhere |
 
 ---
 
@@ -38,18 +36,14 @@ dependencyResolutionManagement {
 }
 ```
 
-### Step 2 — Add dependencies
+### Step 2 — Add dependency
 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    debugImplementation("com.github.khayrullohLive:peek:v1.1.0")
-    releaseImplementation("com.github.khayrullohLive:peek-noop:v1.1.0")
+    implementation("com.github.khayrullohLive:peek:v2.0.0")
 }
 ```
-
-> `debugImplementation` — real library with UI (debug builds only)
-> `releaseImplementation` — empty stubs, no code, no UI (release builds)
 
 ---
 
@@ -61,7 +55,7 @@ dependencies {
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-        Peek.init(this)  // ← one line
+        Peek.init(this)
     }
 }
 ```
@@ -80,7 +74,7 @@ Make sure your `Application` class is registered in `AndroidManifest.xml`:
 
 ```kotlin
 val client = OkHttpClient.Builder()
-    .addInterceptor(Peek.interceptor())  // ← add this
+    .addInterceptor(Peek.interceptor())
     .build()
 ```
 
@@ -99,8 +93,6 @@ fun provideOkHttpClient(): OkHttpClient {
 ---
 
 ### Step 3 — Show the floating bubble
-
-Add `PeekBubble()` inside your root `Box` in `MainActivity`:
 
 ```kotlin
 import io.github.peek.overlay.PeekBubble
@@ -121,8 +113,6 @@ setContent {
 
 ## Bubble
 
-The floating bubble has two buttons:
-
 ```
 ┌─────────────┐
 │  🔍 12  ⏸  │
@@ -132,10 +122,10 @@ The floating bubble has two buttons:
 | Button | Action |
 |---|---|
 | 🔍 + count | Opens the network inspector screen |
-| ▶ | Logging is paused — tap to resume |
 | ⏸ | Logging is active — tap to pause |
+| ▶ | Logging is paused — tap to resume |
 
-The bubble is **draggable** — long-press and drag it anywhere on the screen.
+The bubble is **draggable** — drag it anywhere on the screen.
 
 ---
 
@@ -147,11 +137,9 @@ Tap the 🔍 bubble to open the inspector.
 
 Each row shows:
 - Colored bar (🟢 success / 🟡 pending / 🔴 error)
-- HTTP method with color (GET = blue, POST = green, PUT = orange, DELETE = red)
-- Status code
-- Duration in ms
-- Request path
-- Host
+- HTTP method (GET = blue, POST = green, PUT = orange, DELETE = red)
+- Status code and duration
+- Request path and host
 - Timestamp
 
 **Top-right buttons:**
@@ -160,30 +148,18 @@ Each row shows:
 
 ### Detail view
 
-Tap any row to see the full details:
-
-- Endpoint (full URL)
-- Date & time
-- HTTP method
-- Status code
-- Duration
-- Request headers
-- Request body
-- Response headers
-- Response body
-- Error message (if failed)
+Tap any row to see full details:
+endpoint, date/time, method, status, duration, request headers, request body, response headers, response body, error.
 
 ---
 
 ## Manual control
 
-You can control logging programmatically:
-
 ```kotlin
-Peek.start()   // start capturing requests
-Peek.pause()   // pause — requests still pass through, not logged
-Peek.toggle()  // toggle between start/pause
-Peek.clear()   // delete all captured logs (suspend function)
+Peek.start()            // start capturing
+Peek.pause()            // pause — requests pass through, not logged
+Peek.toggle()           // toggle start/pause
+suspend Peek.clear()    // delete all logs
 ```
 
 ---
@@ -192,7 +168,7 @@ Peek.clear()   // delete all captured logs (suspend function)
 
 ### Via UI
 
-Open the inspector → tap the **📤 Share** button in the top-right corner.
+Open the inspector → tap **📤 Share** in the top-right corner.
 
 ### Programmatically
 
@@ -215,41 +191,13 @@ lifecycleScope.launch {
     "path": "/v1/users",
     "statusCode": 200,
     "durationMs": 156,
-    "requestHeaders": "Authorization: Bearer xxx\nContent-Type: application/json",
+    "requestHeaders": "Authorization: Bearer xxx",
     "requestBody": null,
     "responseHeaders": "Content-Type: application/json",
     "responseBody": "{\"users\": [...]}",
     "error": null
   }
 ]
-```
-
----
-
-## Data model
-
-`PeekLog` entity — only `endpoint` and `date` are required, everything else is nullable:
-
-```kotlin
-data class PeekLog(
-    val id: Long = 0,
-
-    // Required
-    val endpoint: String,   // full URL
-    val date: Long,         // epoch millis
-
-    // Nullable — populated best-effort
-    val method: String?          = null,
-    val host: String?            = null,
-    val path: String?            = null,
-    val durationMs: Long?        = null,
-    val statusCode: Int?         = null,
-    val requestHeaders: String?  = null,
-    val requestBody: String?     = null,
-    val responseHeaders: String? = null,
-    val responseBody: String?    = null,
-    val error: String?           = null,
-)
 ```
 
 ---
@@ -299,18 +247,4 @@ setContent {
 
 ## License
 
-```
-MIT License
-
-Copyright (c) 2026 khayrullohLive
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-```
+MIT License — Copyright (c) 2026 khayrullohLive
