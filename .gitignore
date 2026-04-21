@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Module builds
+peek/build/
+peek-noop/build/
+sample/build/
+
+# Wrapper jar will be present in real projects
+gradle/wrapper/gradle-wrapper.jar
